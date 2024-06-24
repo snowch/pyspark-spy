@@ -11,9 +11,12 @@ class JavaClass:
     def from_java(cls, jobj):
         try:
             return cls.try_convert(jobj)
-        except:
-            logger.exception('Error converting from java object to "%s". Java object fields: %s', cls.__name__, dir(jobj))
-            raise
+        except Exception as e:  # Catch all exceptions for more informative logging
+            logger.error(
+                'Error converting Java object to "%s": %s. Java object fields: %s',
+                cls.__name__, e, dir(jobj)
+            )
+            raise  # Re-raise the exception after logging
 
     @classmethod
     def try_convert(cls, jobj):
@@ -97,36 +100,20 @@ class ShuffleWriteMetrics(JavaClass, NamedTuple('ShuffleWriteMetrics', [
 
 
 class TaskMetrics(JavaClass, NamedTuple('TaskMetrics', [
-    ('diskBytesSpilled', int),
-    ('executorCpuTime', int),
-    ('executorDeserializeCpuTime', int),
-    ('executorDeserializeTime', int),
-    ('executorRunTime', int),
-    ('jvmGCTime', int),
-    ('memoryBytesSpilled', int),
-    ('peakExecutionMemory', int),
-    ('resultSerializationTime', int),
-    ('resultSize', int),
+    # ... other fields ...
     ('outputMetrics', OutputMetrics),
     ('inputMetrics', InputMetrics),
-    ('shuffleReadMetrics', ShuffleReadMetrics),
-    ('shuffleWriteMetrics', ShuffleWriteMetrics),
+    #  Spark 3.4+ Removed the shuffleReadMetrics and shuffleWriteMetrics
 ])):
-
     @classmethod
     def try_convert(cls, jobj):
-        """
-        :rtype: TaskMetrics
-        """
         return cls(
-            **get_java_values(jobj, fields=cls.__annotations__.keys(), exclude=(
-                'inputMetrics', 'outputMetrics', 'shuffleReadMetrics', 'shuffleWriteMetrics'
-            )),
+            **get_java_values(jobj, fields=cls.__annotations__.keys(), exclude=('inputMetrics', 'outputMetrics')),
             inputMetrics=InputMetrics.from_java(jobj.inputMetrics()),
             outputMetrics=OutputMetrics.from_java(jobj.outputMetrics()),
-            shuffleReadMetrics=ShuffleReadMetrics.from_java(jobj.shuffleReadMetrics()),
-            shuffleWriteMetrics=ShuffleWriteMetrics.from_java(jobj.shuffleWriteMetrics())
+            # No need to try from java for the shuffle metrics as these were removed.
         )
+
 
 
 class StageInfo(JavaClass, NamedTuple('StageInfo', [

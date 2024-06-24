@@ -38,7 +38,6 @@ class PersistingSparkListener(SparkListener):
         return self.python_events['stageCompleted']
 
     def stage_output_metrics_aggregate(self) -> OutputMetrics:
-        # noinspection PyArgumentList
         return OutputMetrics(
             bytesWritten=sum(
                 e.stageInfo.taskMetrics.outputMetrics.bytesWritten
@@ -51,7 +50,6 @@ class PersistingSparkListener(SparkListener):
         )
 
     def stage_input_metrics_aggregate(self) -> InputMetrics:
-        # noinspection PyArgumentList
         return InputMetrics(
             bytesRead=sum(
                 e.stageInfo.taskMetrics.inputMetrics.bytesRead
@@ -62,7 +60,6 @@ class PersistingSparkListener(SparkListener):
                 for e in self.stageCompleted
             ),
         )
-
 
 class ContextSparkListener(PersistingSparkListener):
     def __init__(self):
